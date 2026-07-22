@@ -97,7 +97,7 @@ class MultiTextDataset(Dataset):
     def __getitem__(self, idx: int):
         return {
             "idx": idx,
-            "prompts_list": self.ds[idx][self.field],  # List[str]
+            "prompts": self.ds[idx][self.field],  # List[str]
         }
 
 

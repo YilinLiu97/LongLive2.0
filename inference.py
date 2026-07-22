@@ -43,7 +43,7 @@ from torch.utils.data import DataLoader, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
 
 from pipeline import CausalDiffusionInferencePipeline
-from utils.dataset import MultiTextConcatDataset, MultiVideoConcatDataset, eval_collate_fn, multi_video_collate_fn
+from utils.dataset import MultiTextConcatDataset, MultiTextDataset, MultiVideoConcatDataset, eval_collate_fn, multi_video_collate_fn
 from utils.misc import set_seed
 from utils.config import normalize_config, section_get, wan_default_config
 from utils.nvfp4_checkpoint import (
@@ -521,13 +521,16 @@ if getattr(config, "i2v", False):
     num_blocks = config.num_output_frames // nfpb
 else:
     num_blocks = config.num_output_frames // nfpb
-    dataset = MultiTextConcatDataset(
-        data_path=data_path,
-        num_blocks=num_blocks,
-        chunks_per_shot=chunks_per_shot,
-        scene_cut_prefix=scene_cut_prefix,
-        deterministic=True,
-    )
+    if data_path.endswith(".jsonl"):
+        dataset = MultiTextDataset(data_path)
+    else:
+        dataset = MultiTextConcatDataset(
+            data_path=data_path,
+            num_blocks=num_blocks,
+            chunks_per_shot=chunks_per_shot,
+            scene_cut_prefix=scene_cut_prefix,
+            deterministic=True,
+        )
     collate_fn = eval_collate_fn
 if local_rank == 0:
     print(f"[data] data_path={data_path}, mode={getattr(dataset, '_mode', dataset.__class__.__name__)}, num_blocks={num_blocks}")
@@ -646,10 +649,11 @@ for i, batch_data in tqdm(enumerate(dataloader), disable=(local_rank != 0)):
             model_type = "regular"
             
         for seed_idx in range(config.num_samples):
+            seed_value = getattr(config, "seed", None)
             if config.save_with_index:
-                base_name = f'rank{rank}-{idx}-{seed_idx}_{model_type}'
+                base_name = f'rank{rank}-{idx}-seed{seed_value}-{seed_idx}_{model_type}'
             else:
-                base_name = f'rank{rank}-{prompt[:100]}-{seed_idx}_{model_type}'
+                base_name = f'rank{rank}-{prompt[:100]}-seed{seed_value}-{seed_idx}_{model_type}'
 
             if save_latents_only:
                 latent_path = os.path.join(config.output_folder, f'{base_name}.pt')

@@ -6,17 +6,17 @@ model_kwargs:
   local_attn_size: 32
 
 use_ema: false
-output_folder: videos/longlive2
+output_folder: videos/longlive2_plain_prompt
 num_samples: 1
 save_latents_only: false
 
 data:
-  data_path: /path/to/longlive2/inference_prompts
+  data_path: prompts/interactive_plain
   # Latent tensor shape [B, F, C, H, W]. F is also the default number of
   # generated latent frames unless num_output_frames is provided.
   image_or_video_shape:
   - 1
-  - 128
+  - 384
   - 48
   - 44
   - 80
@@ -33,8 +33,8 @@ inference:
   vae_device: "cuda:2"
 
 checkpoints:
-  generator_ckpt: /path/to/longlive2/generator_checkpoint.pt
-  lora_ckpt: /path/to/longlive2/lora_checkpoint.pt
+  generator_ckpt: checkpoints/longlive2_5b/generator.pt
+  lora_ckpt: checkpoints/longlive2_5b/lora.pt
 
 # Presence of this section enables LoRA inference; remove it for full-generator inference.
 adapter:
@@ -45,4 +45,4 @@ adapter:
   verbose: true
 
 logging:
-  seed: 0
+  seed: 42

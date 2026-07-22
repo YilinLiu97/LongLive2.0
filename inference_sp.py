@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 from pipeline.causal_diffusion_inference_sp import CausalDiffusionInferencePipelineSP
 from utils.config import normalize_config, section_get
-from utils.dataset import MultiTextConcatDataset, eval_collate_fn
+from utils.dataset import MultiTextConcatDataset, MultiTextDataset, eval_collate_fn
 from utils.lora_utils import configure_lora_for_model
 from utils.memory import DynamicSwapInstaller, get_cuda_free_memory_gb
 from utils.misc import set_seed
@@ -464,13 +464,16 @@ else:
 
 nfpb = getattr(config, "num_frame_per_block", 8)
 num_blocks = config.num_output_frames // nfpb
-dataset = MultiTextConcatDataset(
-    data_path=config.data_path,
-    num_blocks=num_blocks,
-    chunks_per_shot=getattr(config, "chunks_per_shot", 0),
-    scene_cut_prefix=getattr(config, "scene_cut_prefix", "The scene transitions. "),
-    deterministic=True,
-)
+if config.data_path.endswith(".jsonl"):
+    dataset = MultiTextDataset(config.data_path)
+else:
+    dataset = MultiTextConcatDataset(
+        data_path=config.data_path,
+        num_blocks=num_blocks,
+        chunks_per_shot=getattr(config, "chunks_per_shot", 0),
+        scene_cut_prefix=getattr(config, "scene_cut_prefix", "The scene transitions. "),
+        deterministic=True,
+    )
 if is_main_process:
     print(f"[data] data_path={config.data_path}, mode={dataset._mode}, num_blocks={num_blocks}")
 num_prompts = len(dataset)
